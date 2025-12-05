@@ -1,0 +1,46 @@
+# 🔒 HTB Cap: Write-up Completo (Acesso Inicial e Escalada Root)
+
+Este documento detalha o fluxo de trabalho completo para a resolução da máquina HTB Cap, desde a enumeração inicial e a crucial captura de credenciais até a exploração final de privilégios.
+
+## 1. Enumeração Inicial e Captura de Credenciais
+
+O acesso inicial à máquina foi conquistado pela identificação de um serviço de rede não criptografado, o que permitiu a captura de credenciais de login.
+
+* **Ferramenta de Varredura:** **Nmap** (Identificou serviços abertos como FTP, SSH e HTTP).
+* **Vetor de Ataque:** Serviço de Rede **não criptografado** (provavelmente FTP).
+* **Ferramenta de Análise:** **Wireshark**
+    * **Técnica:** Captura de pacotes de rede enquanto o tráfego de *login* passava pelo serviço vulnerável.
+    * **Descoberta:** A senha do SSH foi interceptada em texto claro, permitindo o *login* inicial.
+* **Acesso Inicial:** Conexão SSH como o usuário `nathan`.
+
+## 2. Escalada de Privilégios (Privilege Escalation)
+
+A escalada de privilégios (do usuário `nathan` para `root`) foi alcançada explorando uma vulnerabilidade de configuração do sistema Linux.
+
+* **Ferramenta de Diagnóstico:** **LinPEAS** (Identificou o vetor de escalada).
+* **Vulnerabilidade:** Má Configuração de **Capabilities** (Habilidades) no binário do Python.
+* **Binário Explorável:** `/usr/bin/python3.8`
+* **Capacidade Alvo:** `cap_setuid`
+
+### 2.1. Explicação da Capacidade `cap_setuid`
+
+A capacidade `cap_setuid` é uma permissão granular que permite a um processo **alterar seu próprio ID de Usuário (UID)** para qualquer valor. Ao definir o UID para **0**, o processo adquire os privilégios totais do usuário **root**.
+
+### 2.2. Exploração Final e Obtenção de `root`
+
+O binário vulnerável do Python foi iniciado, e o seguinte *payload* foi executado para escalar os privilégios:
+
+1.  **Comando para Iniciar o Python:**
+    ```bash
+    /usr/bin/python3.8
+    ```
+2.  **Payload Dentro do Python:**
+    ```python
+    >>> import os
+    >>> os.setuid(0)
+    >>> os.system("/bin/bash")
+    ```
+
+* **Resultado:** Obtenção de um *shell* Bash com privilégios de **root** e captura da *flag* final (`root.txt`).
+
+Qual será o próximo arquivo que você gostaria de criar ou revisar?
